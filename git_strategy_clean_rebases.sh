@@ -8,11 +8,6 @@ c_green=`echo -e '\033[32m'`
 dirname="clean_rebases"
 filenumber="0"
 
-function _fail_out() {
-  echo "ERROR"
-  exit 1
-}
-
 function _checkout_branch() {
   if [ "$(git branch --show-current)" = "$1" ]; then
     return 0
@@ -35,11 +30,6 @@ function _create_branch_and_switch() {
 function _create_branch_from_branch() {
   _checkout_branch "$2"
   _create_branch "$1"
-}
-
-function _create_branch_from_branch_and_switch() {
-  _create_branch_from_branch "$1" "$2"
-  _checkout_branch "$1"
 }
 
 function _make_file_and_commit() {
