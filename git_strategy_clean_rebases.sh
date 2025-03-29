@@ -7,18 +7,86 @@ c_green=`echo -e '\033[32m'`
 
 dirname="clean_rebases"
 filenumber="0"
+simple="$1"
 
-function _checkout_branch() {
-  if [ "$(git branch --show-current)" = "$1" ]; then
+function _simple_check() {
+  if [ "$simple" = "-s" ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function _simple_mode_branch_changes() {
+  if ! _simple_check; then
+    echo $1
+    return
+  fi
+
+  if [ "$1" = "dev" ]; then
+    echo "main"
+  else
+    echo "$1"
+  fi
+}
+
+# use like _simple_mode_skip_hotfixes_check <branch> || return
+function _simple_mode_skip_hotfixes_check() {
+  if ! _simple_check; then
     return 0
   fi
-  echo "${c_yellow}Switch to $1${c_reset}"
-  git switch "$1"
+
+  if [ "$1" = "Hotfix_1" ] || [ "$1" = "Hotfix_2" ]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# use like _simple_mode_skip_dev_check <branch> || return
+function _simple_mode_skip_dev_check() {
+  if ! _simple_check; then
+    return 0
+  fi
+
+  if [ "$1" = "dev" ]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# use like _simple_mode_skip_matching_branches_check <branch> <branch> || return
+function _simple_mode_skip_matching_branches_check() {
+  if ! _simple_check; then
+    return 0
+  fi
+
+  if [ "$1" = "$2" ]; then
+    return 1
+  fi
+
+  return 0
+}
+
+function _checkout_branch() {
+  _simple_mode_skip_hotfixes_check $1 || return
+  local branch="$(_simple_mode_branch_changes $1)"
+
+  if [ "$(git branch --show-current)" = "$branch" ]; then
+    return 0
+  fi
+  echo "${c_yellow}Switch to $branch${c_reset}"
+  git switch "$branch"
 }
 
 function _create_branch() {
-  echo "${c_yellow}Create branch $1${c_reset}"
-  git branch "$1"
+  _simple_mode_skip_hotfixes_check $1 || return
+  _simple_mode_skip_dev_check $1 || return
+  local branch="$(_simple_mode_branch_changes $1)"
+
+  echo "${c_yellow}Create branch $branch${c_reset}"
+  git branch "$branch"
   sleep 1
 }
 
@@ -28,8 +96,14 @@ function _create_branch_and_switch() {
 }
 
 function _create_branch_from_branch() {
-  _checkout_branch "$2"
-  _create_branch "$1"
+  _simple_mode_skip_hotfixes_check $1 || return
+  _simple_mode_skip_hotfixes_check $2 || return
+  local create_branch="$(_simple_mode_branch_changes $1)"
+  local from_branch="$(_simple_mode_branch_changes $2)"
+  _simple_mode_skip_matching_branches_check $create_branch $from_branch || return
+
+  _checkout_branch "$from_branch"
+  _create_branch "$create_branch"
 }
 
 function _make_file_and_commit() {
@@ -47,22 +121,36 @@ function _make_file_and_commit() {
 }
 
 function _make_file_and_commit_from_branch() {
-  _checkout_branch $1
+  _simple_mode_skip_hotfixes_check $1 || return
+  local branch="$(_simple_mode_branch_changes $1)"
+  _checkout_branch $branch
   _make_file_and_commit
 }
 
 function _merge_branch_into_branch() {
-  local message="Merge: $1 -> $2"
-  _checkout_branch "$2"
+  _simple_mode_skip_hotfixes_check $1 || return
+  _simple_mode_skip_hotfixes_check $2 || return
+  local branch="$(_simple_mode_branch_changes $1)"
+  local into_branch="$(_simple_mode_branch_changes $2)"
+  _simple_mode_skip_matching_branches_check $branch $into_branch || return
+
+  local message="Merge: $branch -> $into_branch"
+  _checkout_branch "$into_branch"
   echo "${c_yellow}$message${c_reset}"
-  git merge --no-ff "$1" -m "$message"
+  git merge --no-ff "$branch" -m "$message"
   sleep 1
 }
 
 function _rebase_branch_onto_branch() {
-  _checkout_branch "$1"
-  echo "${c_yellow}Rebase: $1 onto $2${c_reset}"
-  git rebase "$2"
+  _simple_mode_skip_hotfixes_check $1 || return
+  _simple_mode_skip_hotfixes_check $2 || return
+  local branch="$(_simple_mode_branch_changes $1)"
+  local onto_branch="$(_simple_mode_branch_changes $2)"
+  _simple_mode_skip_matching_branches_check $branch $onto_branch || return
+
+  _checkout_branch "$branch"
+  echo "${c_yellow}Rebase: $branch onto $onto_branch${c_reset}"
+  git rebase "$onto_branch"
   sleep 1
 }
 
