@@ -113,9 +113,6 @@ _echo_p "find .git/objects"
 find .git/objects
 _pause
 
-#_echo_p "ls .git/objects/${file1_sha:0:2}"
-#ls .git/objects/${file1_sha:0:2}
-
 _echo_p "cat .git/objects/${file1_sha:0:2}/${file1_sha:2} && echo \"\""
 cat .git/objects/${file1_sha:0:2}/${file1_sha:2} && echo ""
 _pause
@@ -132,6 +129,10 @@ _echo_p "git cat-file -p $file1_sha"
 git cat-file -p "$file1_sha"
 _pause
 
+
+_echo_c "Where does that come from?"
+_pause
+
 # brew install qpdf to get zlib-flate
 _echo_p "zlib-flate -uncompress <.git/objects/${file1_sha:0:2}/${file1_sha:2}"
 zlib-flate -uncompress <.git/objects/${file1_sha:0:2}/${file1_sha:2}
@@ -145,6 +146,10 @@ mkdir subdir
 
 _echo_p "echo \"hello\" >subdir/file2.txt"
 echo "hello" >subdir/file2.txt
+
+_echo_p "chmod +x subdir/file2.txt"
+chmod +x subdir/file2.txt
+_pause
 
 _echo_p "git hash-object -w subdir/file2.txt"
 file2_sha="$(git hash-object -w subdir/file2.txt)"
@@ -162,6 +167,10 @@ echo "goodbye" >file3.txt
 _echo_p "git hash-object -w file3.txt"
 file3_sha="$(git hash-object -w file3.txt)"
 _echo_h $file3_sha
+
+_echo_p "find .git/objects"
+find .git/objects
+_pause
 
 
 
@@ -181,12 +190,15 @@ _echo_p "git ls-files --stage"
 git ls-files --stage
 _pause
 
-_echo_p "git update-index --add --cacheinfo 100644 $file2_sha subdir/file2.txt"
-git update-index --add --cacheinfo 100644 $file2_sha subdir/file2.txt
+_echo_p "git update-index --add --cacheinfo 100755 $file2_sha subdir/file2.txt"
+git update-index --add --cacheinfo 100755 $file2_sha subdir/file2.txt
 #_pause
 
 _echo_p "git ls-files --stage"
 git ls-files --stage
+_pause
+
+_echo_c "do a git status"
 _pause
 
 #_echo_p "git diff-index --cached HEAD"
@@ -208,6 +220,7 @@ git cat-file -p $tree1_sha
 _pause
 
 subtree_sha="$(git cat-file -p $tree1_sha | grep tree | awk "{print \$3}")"
+_echo_h "$subtree_sha"
 _echo_p "git cat-file -p $subtree_sha"
 git cat-file -p $subtree_sha
 _pause
@@ -217,6 +230,10 @@ _pause
 _echo_p "echo 'first commit' | git commit-tree $tree1_sha"
 commit1_sha="$(echo 'first commit' | git commit-tree $tree1_sha)"
 _echo_h $commit1_sha
+
+_echo_p "zlib-flate -uncompress <.git/objects/${commit1_sha:0:2}/${commit1_sha:2}"
+zlib-flate -uncompress <.git/objects/${commit1_sha:0:2}/${commit1_sha:2}
+_pause
 
 _echo_p "git update-ref refs/heads/main $commit1_sha"
 git update-ref refs/heads/main $commit1_sha
@@ -229,9 +246,11 @@ _echo_p "git ls-files --stage"
 git ls-files --stage
 _pause
 
-_echo_p "git diff-index --cached HEAD"
-git diff-index --cached HEAD
-_pause
+_echo_c "do a git status"
+
+#_echo_p "git diff-index --cached HEAD"
+#git diff-index --cached HEAD
+#_pause
 
 _echo_p "find .git/objects -print0 | xargs -0 stat -f '%B %N' | sort -n |cut -d' ' -f2-"
 find .git/objects -print0 | xargs -0 stat -f '%B %N' | sort -n |cut -d' ' -f2-
@@ -256,10 +275,30 @@ _echo_p "echo 'second commit' | git commit-tree $tree2_sha -p $commit1_sha"
 commit2_sha="$(echo 'second commit' | git commit-tree $tree2_sha -p $commit1_sha)"
 _echo_h $commit2_sha
 
-echo "look at diff here"
+_echo_p "zlib-flate -uncompress <.git/objects/${commit2_sha:0:2}/${commit2_sha:2}"
+zlib-flate -uncompress <.git/objects/${commit2_sha:0:2}/${commit2_sha:2}
+_pause
+
+echo "look at refs & logs here"
 
 _echo_p "git update-ref refs/heads/main $commit2_sha"
 git update-ref refs/heads/main $commit2_sha
 _pause
 
 echo "look again here"
+
+# create a tag
+
+_echo_p "git tag -a first_commit -m \"First commit\" $commit1_sha"
+git tag -a first_commit -m "First commit" "$commit1_sha"
+_pause
+
+_echo_p "git rev-parse first_commit"
+tag_sha="$(git rev-parse first_commit)"
+_echo_h $tag_sha
+_pause
+
+_echo_p "find .git/objects -print0 | xargs -0 stat -f '%B %N' | sort -n |cut -d' ' -f2-"
+find .git/objects -print0 | xargs -0 stat -f '%B %N' | sort -n |cut -d' ' -f2-
+_pause
+
