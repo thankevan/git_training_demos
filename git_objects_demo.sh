@@ -111,6 +111,14 @@ _echo_fake_command "ls .git"
 ls --color=always -1 .git
 _echo_fake_prompt
 
+_echo_fake_command "find .git/refs"
+find .git/refs
+_echo_fake_prompt
+
+_echo_fake_command "cat .git/HEAD"
+cat .git/HEAD
+_echo_fake_prompt
+
 _echo_fake_command "find .git/objects"
 find .git/objects
 _echo_fake_prompt
@@ -119,15 +127,6 @@ _echo_fake_prompt
 
 _echo_fake_command "echo \"hello\" >file1.txt"
 echo "hello" >file1.txt
-_echo_fake_prompt
-
-_echo_fake_command "git hash-object file1.txt"
-file1_sha="$(git hash-object file1.txt)"
-_echo_h $file1_sha
-_echo_fake_prompt
-
-_echo_fake_command "find .git/objects"
-find .git/objects
 _echo_fake_prompt
 
 _echo_fake_command "git hash-object -w file1.txt"
@@ -343,5 +342,9 @@ _echo_fake_prompt
 
 _echo_fake_command "find .git/objects -print0 | xargs -0 stat -f '%B %N' | sort -n |cut -d' ' -f2-"
 find .git/objects -print0 | xargs -0 stat -f '%B %N' | sort -n |cut -d' ' -f2-
+_echo_fake_prompt
+
+_echo_fake_command "zlib-flate -uncompress <.git/objects/${tag_sha:0:2}/${tag_sha:2}"
+zlib-flate -uncompress <.git/objects/${tag_sha:0:2}/${tag_sha:2}
 _echo_fake_prompt
 
