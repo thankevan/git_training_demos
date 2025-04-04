@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dirname="squash_rebase_conflict"
+dirname="demo_squash_rebase_conflict"
 
 function _echo_yellow() {
   local c_reset=`echo -e '\033[00m'`

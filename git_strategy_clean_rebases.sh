@@ -5,7 +5,7 @@ c_yellow=`echo -e '\033[1;33m'`
 c_green=`echo -e '\033[32m'`
 
 
-dirname="clean_rebases"
+dirname="demo_clean_rebases"
 filenumber="0"
 simple="$1"
 
